@@ -7,6 +7,8 @@ from torch import nn
 from torch.nn import functional as F
 from torch.nn.modules.dropout import _DropoutNd
 
+from baal.bayesian.common import replace_layers_in_module, _patching_wrapper, BayesianModule
+
 
 class ConsistentDropout(_DropoutNd):
     """
@@ -113,47 +115,44 @@ def patch_module(module: torch.nn.Module, inplace: bool = True) -> torch.nn.Modu
             The modified module, which is either the same object as you passed in
             (if inplace = True) or a copy of that object.
     """
-    if not inplace:
-        module = copy.deepcopy(module)
-    changed = _patch_dropout_layers(module)
-    if not changed:
-        warnings.warn("No layer was modified by patch_module!", UserWarning)
-    return module
+    return _patching_wrapper(module, inplace=inplace, patching_fn=_consistent_dropout_mapping_fn)
 
 
-def _patch_dropout_layers(module: torch.nn.Module) -> bool:
+def unpatch_module(module: torch.nn.Module, inplace: bool = True) -> torch.nn.Module:
+    """Replace ConsistentDropout layers in a model with Dropout layers.
+
+    Args:
+        module (torch.nn.Module):
+            The module in which you would like to replace dropout layers.
+        inplace (bool, optional):
+            Whether to modify the module in place or return a copy of the module.
+
+    Returns:
+        torch.nn.Module
+            The modified module, which is either the same object as you passed in
+            (if inplace = True) or a copy of that object.
     """
-    Recursively iterate over the children of a module and replace them if
-    they are a dropout layer. This function operates in-place.
-    """
-    changed = False
-    for name, child in module.named_children():
-        new_module: Optional[nn.Module] = None
-        if isinstance(child, torch.nn.Dropout):
-            new_module = ConsistentDropout(p=child.p)
-        elif isinstance(child, torch.nn.Dropout2d):
-            new_module = ConsistentDropout2d(p=child.p)
-
-        if new_module is not None:
-            changed = True
-            module.add_module(name, new_module)
-
-        # recursively apply to child
-        changed = changed or _patch_dropout_layers(child)
-    return changed
+    return _patching_wrapper(module, inplace=inplace, patching_fn=_consistent_dropout_unmapping_fn)
 
 
-class MCConsistentDropoutModule(torch.nn.Module):
-    def __init__(self, module: torch.nn.Module):
-        """Create a module that with all dropout layers patched.
+def _consistent_dropout_mapping_fn(module: torch.nn.Module) -> Optional[nn.Module]:
+    new_module: Optional[nn.Module] = None
+    if isinstance(module, torch.nn.Dropout):
+        new_module = ConsistentDropout(p=module.p)
+    elif isinstance(module, torch.nn.Dropout2d):
+        new_module = ConsistentDropout2d(p=module.p)
+    return new_module
 
-        Args:
-            module (torch.nn.Module):
-                A fully specified neural network.
-        """
-        super().__init__()
-        self.parent_module = module
-        _patch_dropout_layers(self.parent_module)
 
-    def forward(self, *args, **kwargs):
-        return self.parent_module.forward(*args, **kwargs)
+def _consistent_dropout_unmapping_fn(module: torch.nn.Module) -> Optional[nn.Module]:
+    new_module: Optional[nn.Module] = None
+    if isinstance(module, ConsistentDropout):
+        new_module = torch.nn.Dropout(p=module.p)
+    elif isinstance(module, ConsistentDropout2d):
+        new_module = torch.nn.Dropout2d(p=module.p)
+    return new_module
+
+
+class MCConsistentDropoutModule(BayesianModule):
+    patching_function = patch_module
+    unpatch_function = unpatch_module

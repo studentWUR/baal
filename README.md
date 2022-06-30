@@ -1,10 +1,25 @@
-# Bayesian Active Learning (BaaL)
-[![CircleCI](https://circleci.com/gh/ElementAI/baal.svg?style=svg&circle-token=aa12d3134798ff2bf8a49cebe3c855b96a776df1)](https://circleci.com/gh/ElementAI/baal)  [![Documentation Status](https://readthedocs.org/projects/baal/badge/?version=latest)](https://baal.readthedocs.io/en/latest/?badge=latest) [![Gitter](https://badges.gitter.im/eai-baal/community.svg)](https://gitter.im/eai-baal/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
----
-
-<p align="left">
+<p align="center">
   <img height=15% width=25% src="https://github.com/ElementAI/baal/blob/master/docs/_static/images/logo-transparent.png?raw=true">
+  <h1 align="center">Bayesian Active Learning (BaaL)
+   <br>
+  <a href="https://github.com/baal-org/baal/actions/workflows/pythonci.yml">
+    <img alt="Python CI" src="https://github.com/baal-org/baal/actions/workflows/pythonci.yml/badge.svg"/>
+  </a>
+  <a href="https://baal.readthedocs.io/en/latest/?badge=latest">
+    <img alt="Documentation Status" src="https://readthedocs.org/projects/baal/badge/?version=latest"/>
+  </a>
+  <a href="https://join.slack.com/t/baal-world/shared_invite/zt-z0izhn4y-Jt6Zu5dZaV2rsAS9sdISfg">
+    <img alt="Slack" src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"/>
+  </a>
+  <a href="https://github.com/Elementai/baal/blob/master/LICENSE">
+    <img alt="Licence" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"/>
+  </a>
+  <a href="https://pepy.tech/project/baal">
+    <img alt="Downloads" src="https://pepy.tech/badge/baal"/>
+  </a>
+  </h1>
 </p>
+
 
 BaaL is an active learning library developed at
 [ElementAI](https://www.elementai.com/). This repository contains techniques
@@ -39,8 +54,9 @@ To use BaaL with [HuggingFace](https://huggingface.co/) Trainers : `pip install 
 * [Synbols: Probing Learning Algorithms with Synthetic Datasets
 ](https://nips.cc/virtual/2020/public/poster_0169cf885f882efd795951253db5cdfb.html) (Lacoste et al. 2020)
 * [Can Active Learning Preemptively Mitigate Fairness Issues?
-](https://arxiv.org/pdf/2104.06879.pdf) (Branchaud-Charron et al, 2021)
-
+](https://arxiv.org/pdf/2104.06879.pdf) (Branchaud-Charron et al. 2021)
+* [Active learning with MaskAL reduces annotation effort for training Mask R-CNN](https://arxiv.org/abs/2112.06586) (Blok et al. 2021)
+* [Stochastic Batch Acquisition for Deep Active Learning](https://arxiv.org/abs/2106.12059) (Kirsch et al. 2022)
 
 # What is active learning?
 Active learning is a special case of machine learning in which a learning
@@ -95,7 +111,7 @@ model = ModelWrapper(model, your_criterion)
 active_loop = ActiveLearningLoop(dataset,
                                  get_probabilities=model.predict_on_dataset,
                                  heuristic=heuristics.BALD(shuffle_prop=0.1),
-                                 ndata_to_label=NDATA_TO_LABEL)
+                                 query_size=NDATA_TO_LABEL)
 for al_step in range(N_ALSTEP):
     model.train_on_dataset(dataset, optimizer, BATCH_SIZE, use_cuda=use_cuda)
     if not active_loop.step():

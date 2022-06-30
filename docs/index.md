@@ -17,7 +17,7 @@ in order to maximize the efficiency of labelling during active learning. Our lib
 To know more on what is Bayesian active learning, see our [User guide](user_guide/index.md).
 
 We are a member of Pytorch's ecosystem, and we welcome contributions from the community.
-If you have any question, we are reachable on [Gitter](https://gitter.im/eai-baal/community#).
+If you have any question, we are reachable on [Slack](https://join.slack.com/t/baal-world/shared_invite/zt-z0izhn4y-Jt6Zu5dZaV2rsAS9sdISfg).
 
 ## Support
 
@@ -25,7 +25,7 @@ For support, we have several ways to help you:
 
 * Our [FAQ](faq.md)
 * Submit an issue on Github [here](https://github.com/ElementAI/baal/issues/new/choose)
-* Join our [Gitter](https://gitter.im/eai-baal/community#)!
+* Join our [Slack](https://join.slack.com/t/baal-world/shared_invite/zt-z0izhn4y-Jt6Zu5dZaV2rsAS9sdISfg)!
 
 ```eval_rst
 .. toctree::
@@ -51,7 +51,7 @@ For support, we have several ways to help you:
     :caption: Compatibility with other libraries
     :maxdepth: 1
     
-    How to use with Pytorch Lightning <notebooks/compatibility/pytorch_lightning.ipynb>
+    How to use with Pytorch Lightning <https://devblog.pytorchlightning.ai/active-learning-made-simple-using-flash-and-baal-2216df6f872c>
     How to use with HuggingFace <notebooks/compatibility/nlp_classification.ipynb>
     How to use with Scikit-Learn <notebooks/compatibility/sklearn_tutorial.ipynb>
     

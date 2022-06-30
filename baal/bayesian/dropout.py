@@ -1,11 +1,11 @@
-import copy
-import warnings
 from typing import Optional
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn.modules.dropout import _DropoutNd
+
+from baal.bayesian.common import BayesianModule, _patching_wrapper
 
 
 class Dropout(_DropoutNd):
@@ -85,7 +85,7 @@ class Dropout2d(_DropoutNd):
 
 
 def patch_module(module: torch.nn.Module, inplace: bool = True) -> torch.nn.Module:
-    """Replace dropout layers in a model with MC Dropout layers.
+    """Replace dropout layers in a model with MCDropout layers.
 
     Args:
         module (torch.nn.Module):
@@ -93,58 +93,56 @@ def patch_module(module: torch.nn.Module, inplace: bool = True) -> torch.nn.Modu
         inplace (bool, optional):
             Whether to modify the module in place or return a copy of the module.
 
-    Raises:
-        UserWarning if no layer is modified.
+    Returns:
+        torch.nn.Module
+            The modified module, which is either the same object as you passed in
+            (if inplace = True) or a copy of that object.
+    """
+    return _patching_wrapper(module, inplace=inplace, patching_fn=_dropout_mapping_fn)
+
+
+def unpatch_module(module: torch.nn.Module, inplace: bool = True) -> torch.nn.Module:
+    """Replace MCDropout layers in a model with Dropout layers.
+
+    Args:
+        module (torch.nn.Module):
+            The module in which you would like to replace dropout layers.
+        inplace (bool, optional):
+            Whether to modify the module in place or return a copy of the module.
 
     Returns:
         torch.nn.Module
             The modified module, which is either the same object as you passed in
             (if inplace = True) or a copy of that object.
     """
-    if not inplace:
-        module = copy.deepcopy(module)
-    changed = _patch_dropout_layers(module)
-    if not changed:
-        warnings.warn("No layer was modified by patch_module!", UserWarning)
-    return module
+    return _patching_wrapper(module, inplace=inplace, patching_fn=_dropout_unmapping_fn)
 
 
-def _patch_dropout_layers(module: torch.nn.Module) -> bool:
+def _dropout_mapping_fn(module: torch.nn.Module) -> Optional[nn.Module]:
+    new_module: Optional[nn.Module] = None
+    if isinstance(module, torch.nn.Dropout):
+        new_module = Dropout(p=module.p, inplace=module.inplace)
+    elif isinstance(module, torch.nn.Dropout2d):
+        new_module = Dropout2d(p=module.p, inplace=module.inplace)
+    return new_module
+
+
+def _dropout_unmapping_fn(module: torch.nn.Module) -> Optional[nn.Module]:
+    new_module: Optional[nn.Module] = None
+    if isinstance(module, Dropout):
+        new_module = torch.nn.Dropout(p=module.p, inplace=module.inplace)
+    elif isinstance(module, Dropout2d):
+        new_module = torch.nn.Dropout2d(p=module.p, inplace=module.inplace)
+    return new_module
+
+
+class MCDropoutModule(BayesianModule):
+    """Create a module that with all dropout layers patched.
+
+    Args:
+        module (torch.nn.Module):
+            A fully specified neural network.
     """
-    Recursively iterate over the children of a module and replace them if
-    they are a dropout layer. This function operates in-place.
 
-    Returns:
-        Flag indicating if a layer was modified.
-    """
-    changed = False
-    for name, child in module.named_children():
-        new_module: Optional[nn.Module] = None
-        if isinstance(child, torch.nn.Dropout):
-            new_module = Dropout(p=child.p, inplace=child.inplace)
-        elif isinstance(child, torch.nn.Dropout2d):
-            new_module = Dropout2d(p=child.p, inplace=child.inplace)
-
-        if new_module is not None:
-            changed = True
-            module.add_module(name, new_module)
-
-        # recursively apply to child
-        changed |= _patch_dropout_layers(child)
-    return changed
-
-
-class MCDropoutModule(torch.nn.Module):
-    def __init__(self, module: torch.nn.Module):
-        """Create a module that with all dropout layers patched.
-
-        Args:
-            module (torch.nn.Module):
-                A fully specified neural network.
-        """
-        super().__init__()
-        self.parent_module = module
-        _patch_dropout_layers(self.parent_module)
-
-    def forward(self, *args, **kwargs):
-        return self.parent_module(*args, **kwargs)
+    patching_function = patch_module
+    unpatch_function = unpatch_module

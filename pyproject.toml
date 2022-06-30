@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "baal"
-version = "1.4.0"
+version = "1.6.0"
 description = "Library to enable Bayesian active learning in your research or labeling work."
 authors = ["Parmida Atighehchian <parmida.atighehchian@servicenow.com>",
            "Frederic Branchaud-Charron <frederic.branchaud-charron@servicenow.com>",
@@ -21,9 +21,8 @@ numpy = "^1.21.2"
 matplotlib = "^3.4.3"
 Pillow = ">=6.2.0"
 tqdm = "^4.62.2"
-pytorch-lightning = ">=1.4.0"
 structlog = "^21.1.0"
-scikit-learn = "^0.24.2"
+scikit-learn = "^1.0.0"
 scipy = "^1.7.1"
 
 # Vision
@@ -55,7 +54,10 @@ numpydoc = "^1.1.0"
 docutils = "0.16"
 recommonmark = "^0.7.1"
 mypy = "^0.910"
+bandit = "^1.7.1"
 
+# Lightning
+lightning-flash = {git = "https://github.com/PyTorchLightning/lightning-flash.git", extras = ["image"]}
 
 [tool.poetry.extras]
 vision = ["torchvision"]
